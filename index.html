@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laboratorio de Taxonomía</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        .emoji-display { font-size: 8rem; line-height: 1; margin: 1rem 0; }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans min-h-screen flex flex-col">
+    <header class="bg-emerald-700 text-white p-5 shadow-md text-center">
+        <h1 class="text-3xl font-bold">Laboratorio Virtual: Claves Dicotómicas</h1>
+        <p class="text-sm mt-1 opacity-90">Ciencias Naturales</p>
+    </header>
+
+    <main class="flex-grow flex flex-col items-center p-6 max-w-3xl mx-auto w-full">
+        <div id="setup-screen" class="w-full text-center bg-white p-8 rounded-xl shadow-lg mt-10">
+            <h2 class="text-2xl font-bold mb-4 text-emerald-800">¡Bienvenido al Laboratorio!</h2>
+            <p class="mb-6 text-lg text-gray-600">Observa detenidamente la morfología del espécimen misterioso y utiliza las claves taxonómicas para descubrir su nombre científico.</p>
+            <button onclick="startGame()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-8 rounded-lg text-xl shadow-md transition duration-200 w-full sm:w-auto">
+                Iniciar Identificación
+            </button>
+        </div>
+
+        <div id="game-screen" class="hidden w-full flex flex-col items-center">
+            <div class="bg-white p-6 rounded-xl shadow-md mb-6 w-full text-center border-t-4 border-emerald-600">
+                <h2 class="text-lg font-semibold text-gray-500 uppercase tracking-wide">Espécimen a Identificar</h2>
+                <div id="specimen-image" class="emoji-display">❓</div>
+            </div>
+
+            <div id="question-container" class="bg-white p-6 md:p-8 rounded-xl shadow-md w-full">
+                <div class="mb-4 inline-block bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-sm font-bold">
+                    Característica: <span id="trait-name"></span>
+                </div>
+                <p id="question-text" class="text-xl font-medium mb-6 text-gray-800"></p>
+                <div class="flex flex-col gap-4">
+                    <button onclick="makeChoice('a')" class="bg-gray-50 hover:bg-emerald-50 border-2 border-gray-200 hover:border-emerald-500 rounded-xl p-5 text-left transition duration-200 group">
+                        <span class="font-bold text-emerald-700 block mb-1 group-hover:text-emerald-800">Opción A</span>
+                        <span id="btn-a" class="text-gray-700 group-hover:text-gray-900"></span>
+                    </button>
+                    <button onclick="makeChoice('b')" class="bg-gray-50 hover:bg-emerald-50 border-2 border-gray-200 hover:border-emerald-500 rounded-xl p-5 text-left transition duration-200 group">
+                        <span class="font-bold text-emerald-700 block mb-1 group-hover:text-emerald-800">Opción B</span>
+                        <span id="btn-b" class="text-gray-700 group-hover:text-gray-900"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="result-screen" class="hidden w-full bg-white p-8 md:p-10 rounded-xl shadow-lg text-center border-t-8 border-emerald-600 mt-4">
+            <div class="text-6xl mb-4">🎉</div>
+            <h2 class="text-sm font-bold text-gray-500 uppercase tracking-widest mb-1">Identificación Exitosa</h2>
+            <h3 class="text-4xl font-bold text-emerald-700 mb-2" id="result-name"></h3>
+            <h4 class="text-2xl italic text-gray-600 mb-8 pb-6 border-b border-gray-200" id="result-scientific"></h4>
+            
+            <div class="text-left bg-gray-50 p-6 rounded-lg mb-8 border border-gray-100">
+                <h4 class="font-bold text-lg mb-4 text-emerald-800">Caracteres Morfológicos Analizados:</h4>
+                <ul id="result-traits" class="list-none space-y-2 text-gray-700"></ul>
+            </div>
+            
+            <button onclick="location.reload()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-8 rounded-lg shadow-md transition duration-200 text-lg">
+                Identificar Nuevo Espécimen
+            </button>
+        </div>
+    </main>
+
+    <footer class="bg-gray-800 text-gray-300 text-center p-4 text-sm mt-auto">
+        <p>Desarrollado para Ciencias Naturales - Prof. CRISTIAN DAVID AYAZO</p>
+    </footer>
+
+    <script>
+        const specimens = [
+            { id: 'jaguar', emoji: '🐆', result: 'Jaguar', scientific: 'Panthera onca' },
+            { id: 'condor', emoji: '🦅', result: 'Cóndor de los Andes', scientific: 'Vultur gryphus' },
+            { id: 'frailejon', emoji: '🌻', result: 'Frailejón', scientific: 'Espeletia grandiflora' },
+            { id: 'palma', emoji: '🌴', result: 'Palma de Cera', scientific: 'Ceroxylon quindiuense' }
+        ];
+
+        const tree = {
+            question: "¿El espécimen muestra características de desplazamiento activo y heterotrofía, o está fijo al sustrato y es autótrofo?",
+            trait: "Reino Biológico",
+            a: {
+                text: "Tiene capacidad de desplazamiento (Reino Animal).",
+                question: "¿El espécimen tiene el cuerpo cubierto de pelos y se apoya en cuatro patas, o tiene plumas y alas?",
+                trait: "Cobertura Corporal y Extremidades",
+                a: {
+                    text: "Cuerpo cubierto de pelos, cuatro extremidades.",
+                    question: "¿Su pelaje presenta un patrón de manchas oscuras en forma de rosetas?",
+                    trait: "Patrón de Coloración de la Piel",
+                    a: { result: "Jaguar", scientific: "Panthera onca", traits: ["1. Presencia de pelo denso", "2. Cuatro extremidades (Tetrápodo)", "3. Patrón de rosetas oscuras en la piel", "4. Mandíbula robusta y musculosa", "5. Cola larga para equilibrio", "6. Garras retráctiles", "7. Orejas pequeñas y redondeadas"] },
+                    b: { error: "Las características no coinciden con el espécimen mostrado." }
+                },
+                b: {
+                    text: "Cuerpo cubierto de plumas, posee alas.",
+                    question: "¿Presenta un collar de plumas blancas alrededor del cuello y su cabeza carece de plumas?",
+                    trait: "Morfología de Cuello y Cabeza",
+                    a: { result: "Cóndor de los Andes", scientific: "Vultur gryphus", traits: ["1. Presencia de plumas (cobertura principalmente negra)", "2. Alas anchas adaptadas al planeo", "3. Collar de plumas blancas en el cuello", "4. Cabeza desprovista de plumas", "5. Pico curvo y ganchudo", "6. Garras fuertes no prensiles", "7. Gran envergadura alar"] },
+                    b: { error: "Las características no coinciden con el espécimen mostrado." }
+                }
+            },
+            b: {
+                text: "Está fijo al sustrato (Reino Vegetal).",
+                question: "¿El espécimen tiene un tronco liso y muy alto con hojas en la corona, o es una planta con hojas dispuestas en roseta basal?",
+                trait: "Tallo y Disposición Foliar",
+                a: {
+                    text: "Tronco alto, cilíndrico, con hojas en la parte superior.",
+                    question: "¿El tronco está cubierto por una fina capa de cera protectora de color blanquecino?",
+                    trait: "Cubierta del Tronco",
+                    a: { result: "Palma de Cera", scientific: "Ceroxylon quindiuense", traits: ["1. Tronco cilíndrico, alto y sin ramificaciones", "2. Presencia de gruesa capa de cera en el tallo", "3. Hojas compuestas pinnadas en la corona", "4. Raíces superficiales fasciculadas", "5. Inflorescencias en racimos colgantes", "6. Frutos en drupas rojas al madurar", "7. Cicatrices foliares circulares visibles en el tallo"] },
+                    b: { error: "Las características no coinciden con el espécimen mostrado." }
+                },
+                b: {
+                    text: "Hojas gruesas agrupadas en forma de roseta desde la base.",
+                    question: "¿Sus hojas tienen una densa capa de vellosidades (pubescencia) para protegerse del frío del páramo?",
+                    trait: "Superficie de la Hoja (Epidermis)",
+                    a: { result: "Frailejón", scientific: "Espeletia grandiflora", traits: ["1. Hojas dispuestas en roseta apical", "2. Densa pubescencia (vellosidades) en las hojas", "3. Tallo grueso, suculento y leñoso", "4. Inflorescencias amarillas tipo capítulo", "5. Raíces profundas para anclaje y agua", "6. Tallo protegido por hojas secas (necromasa marcescente)", "7. Hojas de textura coriácea"] },
+                    b: { error: "Las características no coinciden con el espécimen mostrado." }
+                }
+            }
+        };
+
+        let currentSpecimen = null;
+        let currentNode = null;
+
+        function startGame() {
+            currentSpecimen = specimens[Math.floor(Math.random() * specimens.length)];
+            document.getElementById('specimen-image').textContent = currentSpecimen.emoji;
+            
+            document.getElementById('setup-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+            
+            currentNode = tree;
+            renderQuestion();
+        }
+
+        function renderQuestion() {
+            if (currentNode.result) {
+                if (currentNode.result === currentSpecimen.result) {
+                    showSuccess(currentNode);
+                } else {
+                    showError("¡Atención científico! Has llegado a una conclusión errónea. Observa mejor la morfología del espécimen.");
+                }
+                return;
+            }
+            
+            if (currentNode.error) {
+                showError("Esa característica no corresponde al espécimen que estás observando. ¡Regresa al inicio e inténtalo de nuevo!");
+                return;
+            }
+
+            document.getElementById('trait-name').textContent = currentNode.trait;
+            document.getElementById('question-text').textContent = currentNode.question;
+            document.getElementById('btn-a').textContent = currentNode.a.text;
+            document.getElementById('btn-b').textContent = currentNode.b.text;
+        }
+
+        function makeChoice(choice) {
+            currentNode = currentNode[choice];
+            renderQuestion();
+        }
+
+        function showError(msg) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error de Clasificación',
+                text: msg,
+                confirmButtonColor: '#059669',
+                confirmButtonText: 'Volver a observar'
+            }).then(() => {
+                currentNode = tree;
+                renderQuestion();
+            });
+        }
+
+        function showSuccess(data) {
+            document.getElementById('game-screen').classList.add('hidden');
+            const resScreen = document.getElementById('result-screen');
+            resScreen.classList.remove('hidden');
+            
+            document.getElementById('result-name').textContent = data.result;
+            document.getElementById('result-scientific').textContent = data.scientific;
+            
+            const ul = document.getElementById('result-traits');
+            ul.innerHTML = '';
+            data.traits.forEach(t => {
+                const li = document.createElement('li');
+                li.className = "flex items-center text-gray-700 bg-white p-2 rounded border border-gray-100 shadow-sm";
+                li.innerHTML = `<span class="text-emerald-500 mr-2">✔️</span> ${t}`;
+                ul.appendChild(li);
+            });
+            
+            Swal.fire({
+                icon: 'success',
+                title: '¡Clasificación Correcta!',
+                text: `Has identificado exitosamente a: ${data.scientific}`,
+                confirmButtonColor: '#059669',
+                confirmButtonText: 'Ver Resultados'
+            });
+        }
+    </script>
+</body>
+</html>
